@@ -18,6 +18,24 @@ interface ChatAssistantProps {
   claimData: any;
   extractedText: string;
 }
+const getCohereReply = async (message: string, apiKey: string) => {
+  const response = await fetch("https://api.cohere.ai/v1/chat", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: message,
+      chat_history: [],
+      model: "command-r-plus", // or use "command-r"
+      temperature: 0.7
+    })
+  });
+
+  const data = await response.json();
+  return data.text;
+};
 
 const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -32,33 +50,46 @@ const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps)
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+const sendMessage = async () => {
+  if (!inputMessage.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputMessage,
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    role: "user",
+    content: inputMessage,
+    timestamp: new Date()
+  };
+
+  setMessages(prev => [...prev, userMessage]);
+  setInputMessage("");
+  setIsTyping(true);
+
+  try {
+    const aiReply = await getCohereReply(inputMessage, apiKey); // ⬅️ Real API call
+
+    const assistantMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: "assistant",
+      content: aiReply,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+    setMessages(prev => [...prev, assistantMessage]);
+  } catch (error) {
+    setMessages(prev => [
+      ...prev,
+      {
+        id: (Date.now() + 2).toString(),
         role: "assistant",
-        content: generateMockResponse(inputMessage, claimData),
+        content: "Sorry, something went wrong while getting a response.",
         timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 2000);
-  };
+      }
+    ]);
+    console.error("Cohere API error:", error);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
   const generateMockResponse = (question: string, claimData: any) => {
     const lowerQuestion = question.toLowerCase();
@@ -97,7 +128,7 @@ const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps)
   }, [messages]);
 
   return (
-    <Card className="h-[600px] flex flex-col">
+      <Card className="h-[600px] flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5" />
@@ -111,7 +142,7 @@ const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps)
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {messages.map((message) => (
-              <div
+                <div
                 key={message.id}
                 className={`flex gap-3 ${
                   message.role === "user" ? "justify-end" : "justify-start"
@@ -153,7 +184,7 @@ const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps)
                 <div className="bg-gray-100 rounded-lg px-4 py-2">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                   </div>
                 </div>
