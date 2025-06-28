@@ -61,22 +61,15 @@ streamlit run insurance_claim_assistant.py
 ⸻
 
 🛠️ Features (Built)
-	•	Document uploader (PDF and image)
-	•	OCR + PDF text extraction
-	•	Smart document type classification using GenAI
-	•	Guided form to auto-generate a formal claim letter
-	•	Insurance chatbot trained with context
-	•	Claim amount estimator with GenAI
-	•	PDF download of the claim letter
+	• Document uploader (PDF and image)
+	• OCR + PDF text extraction
+	• Smart document type classification using GenAI
+	• Guided form to auto-generate a formal claim letter
+	• Insurance chatbot trained with context
+	• Claim amount estimator with GenAI
+	• PDF download of the claim letter
+	• Add email sending functionality for claim letters
 
-⸻
 
-🚧 Remaining Work / Future Enhancements
-	•	Auto-fill claim application forms
-	•	Add email sending functionality for claim letters
-	•	UI/UX improvements and responsive design
-	•	Enhance document type classification using Vision Models
-	•	Add agent-to-agent workflows (approval bot, fraud-check agent)
 
-⸻
 
