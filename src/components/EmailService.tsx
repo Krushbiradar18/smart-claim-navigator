@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Mail, Send, Loader2, CheckCircle, FileText, Settings } from "lucide-react";
+import { Mail, Send, CheckCircle, FileText, Download, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import emailjs from '@emailjs/browser';
 
 interface EmailServiceProps {
   claimData: any;
@@ -21,29 +20,16 @@ const EmailService = ({ claimData, claimDescription }: EmailServiceProps) => {
     subject: `Insurance Claim - Policy #${claimData.policy_number || 'N/A'}`,
     message: claimDescription
   });
-  const [emailConfig, setEmailConfig] = useState({
-    serviceId: localStorage.getItem("emailjs_service_id") || "",
-    templateId: localStorage.getItem("emailjs_template_id") || "",
-    publicKey: localStorage.getItem("emailjs_public_key") || ""
-  });
-  const [showConfig, setShowConfig] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
 
   const updateEmailForm = (field: string, value: string) => {
     setEmailForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const updateEmailConfig = (field: string, value: string) => {
-    setEmailConfig(prev => ({ ...prev, [field]: value }));
-    localStorage.setItem(`emailjs_${field.toLowerCase()}`, value);
   };
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const sendEmail = async () => {
+  const sendEmailViaMailto = () => {
     if (!validateEmail(emailForm.to)) {
       toast.error("Please enter a valid email address");
       return;
@@ -54,39 +40,41 @@ const EmailService = ({ claimData, claimDescription }: EmailServiceProps) => {
       return;
     }
 
-    if (!emailConfig.serviceId || !emailConfig.templateId || !emailConfig.publicKey) {
-      toast.error("Please configure EmailJS settings first");
-      setShowConfig(true);
-      return;
-    }
-
-    setIsSending(true);
+    const mailtoLink = `mailto:${emailForm.to}?subject=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.message)}`;
     
     try {
-      const templateParams = {
-        to_email: emailForm.to,
-        subject: emailForm.subject,
-        message: emailForm.message,
-        from_name: "Insurance Claim System",
-        reply_to: claimData.contact_email || "noreply@example.com"
-      };
-
-      await emailjs.send(
-        emailConfig.serviceId,
-        emailConfig.templateId,
-        templateParams,
-        emailConfig.publicKey
-      );
-
-      setEmailSent(true);
-      toast.success("Claim letter sent successfully!");
-      
+      window.open(mailtoLink);
+      toast.success("Email client opened! Please send the email from your email application.");
     } catch (error) {
-      console.error("Email sending failed:", error);
-      toast.error("Failed to send email. Please check your EmailJS configuration and try again.");
-    } finally {
-      setIsSending(false);
+      console.error("Failed to open email client:", error);
+      toast.error("Failed to open email client. Please copy the content manually.");
     }
+  };
+
+  const copyToClipboard = async () => {
+    const emailContent = `To: ${emailForm.to}\nSubject: ${emailForm.subject}\n\n${emailForm.message}`;
+    
+    try {
+      await navigator.clipboard.writeText(emailContent);
+      toast.success("Email content copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const downloadAsText = () => {
+    const emailContent = `To: ${emailForm.to}\nSubject: ${emailForm.subject}\n\n${emailForm.message}`;
+    const blob = new Blob([emailContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `claim-letter-${claimData.policy_number || 'draft'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Claim letter downloaded!");
   };
 
   const generateEmailTemplate = () => {
@@ -118,23 +106,6 @@ Best regards,
     toast.success("Email template generated!");
   };
 
-  if (emailSent) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-            <h3 className="text-lg font-semibold text-green-700">Email Sent Successfully!</h3>
-            <p className="text-gray-600">Your claim letter has been sent to {emailForm.to}</p>
-            <Button onClick={() => setEmailSent(false)} variant="outline">
-              Send Another Email
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -143,69 +114,16 @@ Best regards,
           Send Claim Letter via Email
         </CardTitle>
         <CardDescription>
-          Send your completed claim letter directly to your insurance company
+          Create and send your completed claim letter using your email client
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <Mail className="h-4 w-4" />
           <AlertDescription>
-            This feature uses EmailJS to send emails directly from your browser. Configure your EmailJS settings below to get started.
+            This will open your default email client with a pre-filled message, or you can copy/download the content to send manually.
           </AlertDescription>
         </Alert>
-
-        {/* EmailJS Configuration */}
-        <div className="border rounded-lg p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            <Label className="font-medium">EmailJS Configuration</Label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowConfig(!showConfig)}
-            >
-              {showConfig ? "Hide" : "Configure"}
-            </Button>
-          </div>
-          
-          {showConfig && (
-            <div className="grid grid-cols-1 gap-3 pt-2">
-              <div>
-                <Label htmlFor="service_id">Service ID</Label>
-                <Input
-                  id="service_id"
-                  value={emailConfig.serviceId}
-                  onChange={(e) => updateEmailConfig('serviceId', e.target.value)}
-                  placeholder="your_service_id"
-                />
-              </div>
-              <div>
-                <Label htmlFor="template_id">Template ID</Label>
-                <Input
-                  id="template_id"
-                  value={emailConfig.templateId}
-                  onChange={(e) => updateEmailConfig('templateId', e.target.value)}
-                  placeholder="your_template_id"
-                />
-              </div>
-              <div>
-                <Label htmlFor="public_key">Public Key</Label>
-                <Input
-                  id="public_key"
-                  value={emailConfig.publicKey}
-                  onChange={(e) => updateEmailConfig('publicKey', e.target.value)}
-                  placeholder="your_public_key"
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Get these values from your EmailJS dashboard at{" "}
-                <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  emailjs.com
-                </a>
-              </p>
-            </div>
-          )}
-        </div>
 
         <div className="grid grid-cols-1 gap-4">
           <div>
@@ -241,7 +159,7 @@ Best regards,
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               onClick={generateEmailTemplate}
               variant="outline"
@@ -252,16 +170,30 @@ Best regards,
             </Button>
             
             <Button 
-              onClick={sendEmail}
-              disabled={isSending || !emailForm.to || !emailForm.message}
-              className="flex items-center gap-2 flex-1"
+              onClick={sendEmailViaMailto}
+              disabled={!emailForm.to || !emailForm.message}
+              className="flex items-center gap-2"
             >
-              {isSending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              {isSending ? "Sending..." : "Send Email"}
+              <ExternalLink className="w-4 h-4" />
+              Open Email Client
+            </Button>
+
+            <Button 
+              onClick={copyToClipboard}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Copy Content
+            </Button>
+
+            <Button 
+              onClick={downloadAsText}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Download
             </Button>
           </div>
         </div>
