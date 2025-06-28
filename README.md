@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
 
-## Project info
+# Insurance Claim Assistant
 
-**URL**: https://lovable.dev/projects/10f84040-c806-4f03-8a08-585cf598c820
+## 📁 Project Info
 
-## How can I edit this code?
+This is a GenAI-powered Insurance Claim Assistant that helps users:
 
-There are several ways of editing your application.
+- Upload and process insurance-related documents (PDFs, images)
+- Automatically extract and classify documents
+- Generate formal insurance claim letters
+- Estimate claim amounts
+- Interact with a claim-related chatbot
 
-**Use Lovable**
+🔗 **Live App**: [https://insurance-claim-assistance-2695tjctqvcmnej4dnt5hi.streamlit.app/](https://insurance-claim-assistance-2695tjctqvcmnej4dnt5hi.streamlit.app/)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/10f84040-c806-4f03-8a08-585cf598c820) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 💻 Tech Stack
 
-**Use your preferred IDE**
+| Technology     | Purpose |
+|----------------|---------|
+| **Streamlit**  | UI, frontend, and deployment |
+| **Python**     | Backend logic |
+| **Cohere API** | GenAI for document classification, claim letter writing, estimation, and chatbot |
+| **PyPDF2**     | PDF reading and text extraction |
+| **pytesseract**| OCR for image-based documents |
+| **Pillow (PIL)** | Image processing |
+| **fpdf**       | Generate downloadable claim letters as PDF |
+| **dotenv**     | Secure handling of API keys via `.env` |
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Running Locally
 
-Follow these steps:
+### Prerequisites
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Python 3.10+
+- `pip`
+- `.env` file with your Cohere API key
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```env
+COHERE_API_KEY=your_actual_key_here
 
-# Step 3: Install the necessary dependencies.
-npm i
+Steps
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+# 1. Clone the repository
+git clone <your-repo-url>
+cd insurance-claim-assistant
 
-**Edit a file directly in GitHub**
+# 2. (Optional) Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate      # On Windows: venv\Scripts\activate
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+# 3. Install required packages
+pip install -r requirements.txt
 
-**Use GitHub Codespaces**
+# 4. Run the Streamlit app
+streamlit run insurance_claim_assistant.py
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+⸻
 
-This project is built with:
+🛠️ Features (Built)
+	•	Document uploader (PDF and image)
+	•	OCR + PDF text extraction
+	•	Smart document type classification using GenAI
+	•	Guided form to auto-generate a formal claim letter
+	•	Insurance chatbot trained with context
+	•	Claim amount estimator with GenAI
+	•	PDF download of the claim letter
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+⸻
 
-## How can I deploy this project?
+🚧 Remaining Work / Future Enhancements
+	•	Auto-fill claim application forms
+	•	Add email sending functionality for claim letters
+	•	UI/UX improvements and responsive design
+	•	Enhance document type classification using Vision Models
+	•	Add agent-to-agent workflows (approval bot, fraud-check agent)
 
-Simply open [Lovable](https://lovable.dev/projects/10f84040-c806-4f03-8a08-585cf598c820) and click on Share -> Publish.
+⸻
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
