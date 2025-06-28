@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Upload, FileText, Image, CheckCircle, AlertTriangle, Loader2, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,14 +13,27 @@ interface DocumentUploadProps {
   onDocumentTypesDetected: (types: string) => void;
 }
 
+interface ImageFeatures {
+  filename: string;
+  width: number;
+  height: number;
+  aspectRatio: number;
+  size: number;
+  type: string;
+  hasText: boolean;
+  colorComplexity: number;
+  brightness: number;
+  contrast: number;
+}
+
 const DocumentUpload = ({ apiKey, onTextExtracted, onDocumentTypesDetected }: DocumentUploadProps) => {
   const [extractedText, setExtractedText] = useState("");
   const [documentTypes, setDocumentTypes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [imageFeatures, setImageFeatures] = useState<any[]>([]);
+  const [imageFeatures, setImageFeatures] = useState<ImageFeatures[]>([]);
 
-  const analyzeImageFeatures = async (file: File) => {
+  const analyzeImageFeatures = async (file: File): Promise<ImageFeatures> => {
     return new Promise((resolve) => {
       const img = new window.Image();
       const canvas = document.createElement('canvas');
@@ -33,7 +45,7 @@ const DocumentUpload = ({ apiKey, onTextExtracted, onDocumentTypesDetected }: Do
         ctx?.drawImage(img, 0, 0);
         
         // Extract basic image features
-        const features = {
+        const features: ImageFeatures = {
           filename: file.name,
           width: img.width,
           height: img.height,
@@ -54,7 +66,7 @@ const DocumentUpload = ({ apiKey, onTextExtracted, onDocumentTypesDetected }: Do
     });
   };
 
-  const classifyWithImageFeatures = async (text: string, features: any[]) => {
+  const classifyWithImageFeatures = async (text: string, features: ImageFeatures[]) => {
     // Enhanced classification prompt that includes image features
     const imageAnalysis = features.map(f => 
       `Image: ${f.filename} - Size: ${f.width}x${f.height}, Aspect Ratio: ${f.aspectRatio.toFixed(2)}, Has Text: ${f.hasText}, Color Complexity: ${f.colorComplexity.toFixed(1)}`
@@ -93,7 +105,7 @@ Provide confidence scores and reasoning for your classification.`;
 
     try {
       let combinedText = "";
-      const allImageFeatures: any[] = [];
+      const allImageFeatures: ImageFeatures[] = [];
       
       for (const file of fileArray) {
         if (file.type === "application/pdf") {
