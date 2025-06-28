@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Upload, FileText, Calculator, MessageCircle, Settings, CheckCircle, AlertTriangle } from "lucide-react";
+import { Upload, FileText, Calculator, MessageCircle, Settings, CheckCircle, AlertTriangle, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import ClaimForm from "@/components/ClaimForm";
 import ClaimEstimator from "@/components/ClaimEstimator";
 import ChatAssistant from "@/components/ChatAssistant";
 import ApiKeySetup from "@/components/ApiKeySetup";
+import ClaimValidation from "@/components/ClaimValidation";
+import EmailService from "@/components/EmailService";
 
 const Index = () => {
   const [apiKey, setApiKey] = useState(localStorage.getItem("cohere_api_key") || "");
@@ -45,7 +47,7 @@ const Index = () => {
             Smart Insurance Assistant
           </h1>
           <p className="text-lg text-gray-600">
-            AI-powered claim processing and assistance
+            AI-powered claim processing with enhanced validation and email support
           </p>
         </div>
 
@@ -72,12 +74,30 @@ const Index = () => {
               </div>
               <span className="ml-2 text-sm font-medium text-gray-500">Review</span>
             </div>
+            <div className="w-16 h-1 bg-gray-200 rounded"></div>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">
+                4
+              </div>
+              <span className="ml-2 text-sm font-medium text-gray-500">Send</span>
+            </div>
           </div>
         </div>
 
+        {/* Claim Validation Status */}
+        {(claimData.claim_type || extractedText) && (
+          <div className="mb-6">
+            <ClaimValidation
+              claimData={claimData}
+              documentTypes={documentTypes}
+              extractedText={extractedText}
+            />
+          </div>
+        )}
+
         {/* Main Content */}
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px] mx-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[750px] mx-auto">
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Upload
@@ -89,6 +109,10 @@ const Index = () => {
             <TabsTrigger value="estimate" className="flex items-center gap-2">
               <Calculator className="w-4 h-4" />
               Estimate
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email
             </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageCircle className="w-4 h-4" />
@@ -119,6 +143,13 @@ const Index = () => {
               apiKey={apiKey}
               claimData={claimData}
               extractedText={extractedText}
+            />
+          </TabsContent>
+
+          <TabsContent value="email">
+            <EmailService
+              claimData={claimData}
+              claimDescription={claimData.user_description}
             />
           </TabsContent>
 
