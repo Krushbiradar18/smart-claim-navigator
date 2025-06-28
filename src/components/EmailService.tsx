@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { Mail, Send, CheckCircle, FileText, Download, ExternalLink } from "lucide-react";
+import { Mail, Send, CheckCircle, FileText, Download, ExternalLink, Copy, Globe } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 interface EmailServiceProps {
@@ -27,28 +28,6 @@ const EmailService = ({ claimData, claimDescription }: EmailServiceProps) => {
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const sendEmailViaMailto = () => {
-    if (!validateEmail(emailForm.to)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    if (!emailForm.message.trim()) {
-      toast.error("Please provide a claim description");
-      return;
-    }
-
-    const mailtoLink = `mailto:${emailForm.to}?subject=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.message)}`;
-    
-    try {
-      window.open(mailtoLink);
-      toast.success("Email client opened! Please send the email from your email application.");
-    } catch (error) {
-      console.error("Failed to open email client:", error);
-      toast.error("Failed to open email client. Please copy the content manually.");
-    }
   };
 
   const copyToClipboard = async () => {
@@ -75,6 +54,39 @@ const EmailService = ({ claimData, claimDescription }: EmailServiceProps) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success("Claim letter downloaded!");
+  };
+
+  const openGmailCompose = () => {
+    if (!validateEmail(emailForm.to)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailForm.to)}&su=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.message)}`;
+    window.open(gmailUrl, '_blank');
+    toast.success("Gmail compose window opened!");
+  };
+
+  const openOutlookCompose = () => {
+    if (!validateEmail(emailForm.to)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(emailForm.to)}&subject=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.message)}`;
+    window.open(outlookUrl, '_blank');
+    toast.success("Outlook compose window opened!");
+  };
+
+  const openYahooCompose = () => {
+    if (!validateEmail(emailForm.to)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodeURIComponent(emailForm.to)}&subject=${encodeURIComponent(emailForm.subject)}&body=${encodeURIComponent(emailForm.message)}`;
+    window.open(yahooUrl, '_blank');
+    toast.success("Yahoo Mail compose window opened!");
   };
 
   const generateEmailTemplate = () => {
@@ -114,14 +126,14 @@ Best regards,
           Send Claim Letter via Email
         </CardTitle>
         <CardDescription>
-          Create and send your completed claim letter using your email client
+          Multiple ways to send your completed claim letter
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <Mail className="h-4 w-4" />
           <AlertDescription>
-            This will open your default email client with a pre-filled message, or you can copy/download the content to send manually.
+            Choose from multiple email options below. We'll open your preferred email service with a pre-filled message.
           </AlertDescription>
         </Alert>
 
@@ -159,42 +171,80 @@ Best regards,
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-4">
             <Button 
               onClick={generateEmailTemplate}
               variant="outline"
-              className="flex items-center gap-2"
+              className="w-full flex items-center gap-2"
             >
               <FileText className="w-4 h-4" />
-              Generate Template
-            </Button>
-            
-            <Button 
-              onClick={sendEmailViaMailto}
-              disabled={!emailForm.to || !emailForm.message}
-              className="flex items-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open Email Client
+              Generate Professional Template
             </Button>
 
-            <Button 
-              onClick={copyToClipboard}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <FileText className="w-4 h-4" />
-              Copy Content
-            </Button>
+            <Tabs defaultValue="webmail" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="webmail">Web Email Services</TabsTrigger>
+                <TabsTrigger value="offline">Offline Options</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="webmail" className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <Button 
+                    onClick={openGmailCompose}
+                    disabled={!emailForm.to || !emailForm.message}
+                    className="flex items-center gap-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Send via Gmail
+                  </Button>
+                  
+                  <Button 
+                    onClick={openOutlookCompose}
+                    disabled={!emailForm.to || !emailForm.message}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Send via Outlook
+                  </Button>
+                  
+                  <Button 
+                    onClick={openYahooCompose}
+                    disabled={!emailForm.to || !emailForm.message}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Send via Yahoo Mail
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="offline" className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <Button 
+                    onClick={copyToClipboard}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy to Clipboard
+                  </Button>
 
-            <Button 
-              onClick={downloadAsText}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </Button>
+                  <Button 
+                    onClick={downloadAsText}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download as Text File
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Copy the content and paste it into your preferred email client, or download it as a file to attach to your email.
+                </p>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </CardContent>
