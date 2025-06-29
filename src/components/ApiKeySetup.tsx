@@ -38,11 +38,11 @@ const ApiKeySetup = ({ onApiKeySet }: ApiKeySetupProps) => {
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Key className="w-8 h-8 text-blue-600" />
           </div>
-          <CardTitle className="text-2xl">Setup Required</CardTitle>
-          <CardDescription>
-  Enter the following API key: <strong>jwz7Wj2uwq2TAIFd0KrcQQ97IvrdlpQfc72hL29b</strong>
-</CardDescription>
-        </CardHeader>
+    <CardTitle className="text-2xl">Setup Required</CardTitle>
+    <AlertDescription>
+      <strong>Enter the following API key:<br/>jwz7Wj2uwq2TAIFd0KrcQQ97IvrdlpQfc72hL29b</strong>
+    </AlertDescription>
+  </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <Info className="h-4 w-4" />
@@ -74,17 +74,7 @@ const ApiKeySetup = ({ onApiKeySet }: ApiKeySetupProps) => {
             </Button>
           </form>
           
-          <div className="text-sm text-gray-500 space-y-2">
-            <p>Don't have an API key?</p>
-            <a 
-              href="https://cohere.ai/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Get your free Cohere API key →
-            </a>
-          </div>
+          
         </CardContent>
       </Card>
     </div>
