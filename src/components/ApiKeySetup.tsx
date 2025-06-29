@@ -40,8 +40,8 @@ const ApiKeySetup = ({ onApiKeySet }: ApiKeySetupProps) => {
           </div>
           <CardTitle className="text-2xl">Setup Required</CardTitle>
           <CardDescription>
-            Enter your Cohere API key to get started with AI-powered claim assistance
-          </CardDescription>
+  Enter the following API key: <strong>jwz7Wj2uwq2TAIFd0KrcQQ97IvrdlpQfc72hL29b</strong>
+</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
