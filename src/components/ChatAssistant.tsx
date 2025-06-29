@@ -26,11 +26,11 @@ const getCohereReply = async (message: string, apiKey: string) => {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      message: message,
-      chat_history: [],
-      model: "command-r-plus", // or use "command-r"
-      temperature: 0.7
-    })
+  message: `You are a helpful assistant specializing in insurance claims and BFSI (Banking, Financial Services, and Insurance). Only answer questions within these domains. If asked something outside this scope, respond with: "I'm designed to assist only with insurance and BFSI-related queries." Now answer: ${message}`,
+  chat_history: [],
+  model: "command-r-plus",
+  temperature: 0.5
+})
   });
 
   const data = await response.json();
