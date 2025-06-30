@@ -52,8 +52,8 @@ const DocumentUpload = ({ apiKey, onTextExtracted, onDocumentTypesDetected }: Do
           aspectRatio: img.width / img.height,
           size: file.size,
           type: file.type,
-          // Simulate color analysis and text density detection
-          hasText: Math.random() > 0.3, // Simulate text detection
+          // Simulate text detection based on filename and content
+          hasText: file.name.toLowerCase().includes('report') || file.name.toLowerCase().includes('bill') || file.name.toLowerCase().includes('medical'),
           colorComplexity: Math.random() * 100,
           brightness: Math.random() * 100,
           contrast: Math.random() * 100
@@ -66,34 +66,69 @@ const DocumentUpload = ({ apiKey, onTextExtracted, onDocumentTypesDetected }: Do
     });
   };
 
-  const classifyWithImageFeatures = async (text: string, features: ImageFeatures[]) => {
-    // Enhanced classification prompt that includes image features
-    const imageAnalysis = features.map(f => 
-      `Image: ${f.filename} - Size: ${f.width}x${f.height}, Aspect Ratio: ${f.aspectRatio.toFixed(2)}, Has Text: ${f.hasText}, Color Complexity: ${f.colorComplexity.toFixed(1)}`
-    ).join('\n');
-
-    const enhancedPrompt = `Classify the document type(s) based on both text content and image characteristics.
-
-TEXT CONTENT:
-${text}
-
-IMAGE ANALYSIS:
-${imageAnalysis}
-
-Classification Rules:
-- Hospital Bill: Usually has structured text, tables, medical terminology, moderate aspect ratio
-- Medical Report: Dense text, medical terms, often portrait orientation
-- Police Report: Official format, structured layout, government terminology
-- Vehicle Images: High aspect ratio variations, less text density, outdoor/vehicle features
-- Flight Ticket: Specific format, travel terminology, barcode-like elements
-- Passport Copy: Standard document size, portrait orientation, official format
-- Discharge Summary: Medical terminology, structured format, hospital letterhead
-
-Choose from: Hospital Bill, Discharge Summary, Doctor's Report, Police Report, Vehicle Image, Medical Report, Flight Ticket, Passport Copy, Lost Baggage Report
-
-Provide confidence scores and reasoning for your classification.`;
-
-    return enhancedPrompt;
+  const classifyDocuments = (text: string, features: ImageFeatures[], files: File[]) => {
+    const classifications: string[] = [];
+    
+    console.log("Classifying documents:", { text, features, files: files.map(f => f.name) });
+    
+    // Check for vehicle images first (any uploaded image that's not clearly a document)
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length > 0) {
+      const hasDocumentKeywords = text.toLowerCase().includes('hospital') || 
+                                 text.toLowerCase().includes('medical') || 
+                                 text.toLowerCase().includes('bill') || 
+                                 text.toLowerCase().includes('report');
+      
+      // If we have images but no clear document text, assume they are vehicle images
+      const hasVehicleImages = imageFiles.some(f => {
+        const name = f.name.toLowerCase();
+        return name.includes('car') || name.includes('vehicle') || name.includes('damage') || 
+               name.includes('accident') || name.includes('photo') || name.includes('img') ||
+               (!name.includes('report') && !name.includes('bill') && !name.includes('medical'));
+      });
+      
+      if (hasVehicleImages || (!hasDocumentKeywords && imageFiles.length > 0)) {
+        classifications.push("Vehicle Images");
+      }
+    }
+    
+    // Text-based classification
+    const textLower = text.toLowerCase();
+    
+    if (textLower.includes('hospital') || textLower.includes('bill') || textLower.includes('invoice')) {
+      classifications.push("Hospital Bill");
+    }
+    
+    if (textLower.includes('medical') || textLower.includes('doctor') || textLower.includes('treatment')) {
+      classifications.push("Medical Report");
+    }
+    
+    if (textLower.includes('police') || textLower.includes('fir') || textLower.includes('accident report')) {
+      classifications.push("Police Report");
+    }
+    
+    if (textLower.includes('flight') || textLower.includes('ticket') || textLower.includes('airline')) {
+      classifications.push("Flight Ticket");
+    }
+    
+    if (textLower.includes('passport') || textLower.includes('identity')) {
+      classifications.push("Passport Copy");
+    }
+    
+    if (textLower.includes('baggage') || textLower.includes('luggage') || textLower.includes('lost')) {
+      classifications.push("Lost Baggage Report");
+    }
+    
+    // Default fallback - if no specific classification and we have files
+    if (classifications.length === 0 && files.length > 0) {
+      if (imageFiles.length > 0) {
+        classifications.push("Vehicle Images");
+      }
+      classifications.push("Medical Report");
+    }
+    
+    console.log("Final classifications:", classifications);
+    return classifications;
   };
 
   const handleFileUpload = useCallback(async (files: FileList | null) => {
@@ -136,35 +171,15 @@ Provide confidence scores and reasoning for your classification.`;
       onTextExtracted(combinedText);
 
       // Enhanced classification using both text and image features
-      const enhancedPrompt = await classifyWithImageFeatures(combinedText, allImageFeatures);
-      
-      // Simulate enhanced API call with image feature analysis
       setTimeout(() => {
-        // More sophisticated mock classification based on features
-        let classificationResult = "";
-        
-        if (allImageFeatures.some(f => f.aspectRatio > 1.5 && !f.hasText)) {
-          classificationResult += "Vehicle Image, ";
-        }
-        if (combinedText.toLowerCase().includes('medical') || combinedText.toLowerCase().includes('hospital')) {
-          classificationResult += "Hospital Bill, Medical Report, ";
-        }
-        if (combinedText.toLowerCase().includes('flight') || combinedText.toLowerCase().includes('travel')) {
-          classificationResult += "Flight Ticket, ";
-        }
-        
-        // Default fallback
-        if (!classificationResult) {
-          classificationResult = "Medical Report, Hospital Bill";
-        }
-        
-        classificationResult = classificationResult.replace(/, $/, ''); // Remove trailing comma
+        const classifications = classifyDocuments(combinedText, allImageFeatures, fileArray);
+        const classificationResult = classifications.join(", ");
         
         setDocumentTypes(classificationResult);
         onDocumentTypesDetected(classificationResult);
         setIsProcessing(false);
         
-        toast.success(`Documents processed successfully! Enhanced classification using ${allImageFeatures.length} image features.`);
+        toast.success(`Documents processed successfully! Detected: ${classificationResult}`);
       }, 2500);
 
     } catch (error) {
