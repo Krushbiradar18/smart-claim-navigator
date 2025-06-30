@@ -51,11 +51,43 @@ const ClaimValidation = ({ claimData, documentTypes, extractedText }: ClaimValid
     if (!claimData.claim_type || !documentTypes) return { missing: [], provided: [] };
     
     const required = requiredDocuments[claimData.claim_type as keyof typeof requiredDocuments] || [];
-    const provided = documentTypes.toLowerCase();
-    const missing = required.filter(doc => !provided.includes(doc.toLowerCase()));
-    const availablesDocs = required.filter(doc => provided.includes(doc.toLowerCase()));
+    const providedLower = documentTypes.toLowerCase();
     
-    return { missing, provided: availablesDocs };
+    console.log("Debug - Document validation:");
+    console.log("Required documents:", required);
+    console.log("Provided document types:", documentTypes);
+    console.log("Provided (lowercase):", providedLower);
+    
+    // More flexible matching - check for partial matches and common variations
+    const isDocumentProvided = (requiredDoc: string) => {
+      const docLower = requiredDoc.toLowerCase();
+      
+      // Direct match
+      if (providedLower.includes(docLower)) return true;
+      
+      // Handle common variations
+      const variations: { [key: string]: string[] } = {
+        "police report": ["police", "report", "fir", "accident report"],
+        "vehicle images": ["vehicle", "image", "car", "damage", "photo"],
+        "medical report": ["medical", "doctor", "health", "treatment"],
+        "hospital bill": ["hospital", "bill", "invoice", "receipt"],
+        "discharge summary": ["discharge", "summary", "hospital"],
+        "flight ticket": ["flight", "ticket", "boarding", "travel"],
+        "passport copy": ["passport", "id", "identity"],
+        "lost baggage report": ["baggage", "luggage", "lost", "report"]
+      };
+      
+      const docVariations = variations[docLower] || [];
+      return docVariations.some(variation => providedLower.includes(variation));
+    };
+    
+    const missing = required.filter(doc => !isDocumentProvided(doc));
+    const provided = required.filter(doc => isDocumentProvided(doc));
+    
+    console.log("Missing documents:", missing);
+    console.log("Provided documents:", provided);
+    
+    return { missing, provided };
   };
 
   const getClaimCompleteness = () => {
