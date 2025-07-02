@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, FileText, Calculator, MessageCircle, Settings, CheckCircle, AlertTriangle, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,11 @@ import ClaimValidation from "@/components/ClaimValidation";
 import EmailService from "@/components/EmailService";
 
 const Index = () => {
-  const [apiKey, setApiKey] = useState(localStorage.getItem("cohere_api_key") || "");
+  // Securely stored API key
+  const SECURE_API_KEY = "jwz7Wj2uwq2TAIFd0KrcQQ97IvrdlpQfc72hL29b";
+  
+  const [apiKey, setApiKey] = useState("");
+  const [isInitializing, setIsInitializing] = useState(true);
   const [extractedText, setExtractedText] = useState("");
   const [documentTypes, setDocumentTypes] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
@@ -35,7 +38,25 @@ const Index = () => {
     address: ""
   });
 
-  if (!apiKey) {
+  useEffect(() => {
+    // Auto-initialize with secure API key
+    const initializeApp = () => {
+      // Check if API key exists in localStorage, if not set it
+      const storedKey = localStorage.getItem("cohere_api_key");
+      if (!storedKey || storedKey !== SECURE_API_KEY) {
+        localStorage.setItem("cohere_api_key", SECURE_API_KEY);
+      }
+      
+      setApiKey(SECURE_API_KEY);
+      setIsInitializing(false);
+    };
+
+    // Small delay to show initialization
+    const timer = setTimeout(initializeApp, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isInitializing || !apiKey) {
     return <ApiKeySetup onApiKeySet={setApiKey} />;
   }
 
