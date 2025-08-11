@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Send, User, Bot } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,7 @@ interface ChatAssistantProps {
   claimData: any;
   extractedText: string;
 }
+
 const getCohereReply = async (message: string, apiKey: string) => {
   const response = await fetch("https://api.cohere.ai/v1/chat", {
     method: "POST",
@@ -26,11 +26,12 @@ const getCohereReply = async (message: string, apiKey: string) => {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-  message: `You are a helpful assistant specializing in insurance claims and BFSI (Banking, Financial Services, and Insurance). Only answer questions within these domains. If asked something outside this scope, respond with: "I'm designed to assist only with insurance and BFSI-related queries." Now answer: ${message}`,
-  chat_history: [],
-  model: "command-r-plus",
-  temperature: 0.5
-})
+      message: `You are a helpful insurance assistant. Keep responses concise (2-3 sentences max). Focus on practical advice. Only answer insurance and BFSI questions. If asked about other topics, respond: "I'm designed to assist only with insurance and BFSI-related queries." Question: ${message}`,
+      chat_history: [],
+      model: "command-r-plus",
+      temperature: 0.3,
+      max_tokens: 150
+    })
   });
 
   const data = await response.json();
@@ -65,7 +66,7 @@ const sendMessage = async () => {
   setIsTyping(true);
 
   try {
-    const aiReply = await getCohereReply(inputMessage, apiKey); // ⬅️ Real API call
+    const aiReply = await getCohereReply(inputMessage, apiKey);
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
@@ -139,38 +140,40 @@ const sendMessage = async () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
+          <div className="space-y-6">
             {messages.map((message) => (
-                <div
+              <div
                 key={message.id}
                 className={`flex gap-3 ${
                   message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 {message.role === "assistant" && (
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Bot className="w-4 h-4 text-primary" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                     message.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-900"
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted text-muted-foreground rounded-bl-md"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className="text-xs mt-1 opacity-70">
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {message.content}
+                  </div>
+                  <div className="text-xs mt-2 opacity-60">
                     {message.timestamp.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit"
                     })}
-                  </p>
+                  </div>
                 </div>
                 {message.role === "user" && (
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-gray-600" />
+                  <div className="w-8 h-8 bg-secondary/50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <User className="w-4 h-4 text-secondary-foreground" />
                   </div>
                 )}
               </div>
@@ -178,14 +181,14 @@ const sendMessage = async () => {
             
             {isTyping && (
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <Bot className="w-4 h-4 text-primary" />
                 </div>
-                <div className="bg-gray-100 rounded-lg px-4 py-2">
+                <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                    <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                   </div>
                 </div>
               </div>
@@ -193,7 +196,7 @@ const sendMessage = async () => {
           </div>
         </ScrollArea>
         
-        <div className="border-t p-4">
+        <div className="border-t bg-background/95 backdrop-blur p-4">
           <div className="flex gap-2">
             <Input
               value={inputMessage}
@@ -201,11 +204,13 @@ const sendMessage = async () => {
               placeholder="Ask a question about your claim..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               disabled={isTyping}
+              className="flex-1"
             />
             <Button 
               onClick={sendMessage} 
               disabled={!inputMessage.trim() || isTyping}
               size="icon"
+              className="shrink-0"
             >
               <Send className="w-4 h-4" />
             </Button>
