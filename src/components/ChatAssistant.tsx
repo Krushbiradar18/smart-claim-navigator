@@ -18,7 +18,13 @@ interface ChatAssistantProps {
   extractedText: string;
 }
 
-const getCohereReply = async (message: string, apiKey: string) => {
+const getCohereReply = async (message: string, apiKey: string, chatHistory: Message[]) => {
+  // Convert our message format to Cohere's expected format
+  const cohereHistory = chatHistory.slice(-10).map(msg => ({
+    role: msg.role === "assistant" ? "CHATBOT" : "USER",
+    message: msg.content
+  }));
+
   const response = await fetch("https://api.cohere.ai/v1/chat", {
     method: "POST",
     headers: {
@@ -27,7 +33,7 @@ const getCohereReply = async (message: string, apiKey: string) => {
     },
     body: JSON.stringify({
       message: `You are a helpful insurance assistant. Keep responses concise (2-3 sentences max). Focus on practical advice. Only answer insurance and BFSI questions. If asked about other topics, respond: "I'm designed to assist only with insurance and BFSI-related queries." Question: ${message}`,
-      chat_history: [],
+      chat_history: cohereHistory,
       model: "command-r-plus",
       temperature: 0.3,
       max_tokens: 150
@@ -39,14 +45,43 @@ const getCohereReply = async (message: string, apiKey: string) => {
 };
 
 const ChatAssistant = ({ apiKey, claimData, extractedText }: ChatAssistantProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hello! I'm your insurance claim assistant. I can help you with questions about your claim, explain insurance terms, or provide guidance on the claim process. How can I assist you today?",
-      timestamp: new Date()
+  const [messages, setMessages] = useState<Message[]>([]);
+  
+  // Load chat history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('chat-history');
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory).map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(parsedHistory);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        setMessages([{
+          id: "1",
+          role: "assistant",
+          content: "Hello! I'm your insurance claim assistant. I can help you with questions about your claim, explain insurance terms, or provide guidance on the claim process. How can I assist you today?",
+          timestamp: new Date()
+        }]);
+      }
+    } else {
+      setMessages([{
+        id: "1",
+        role: "assistant",
+        content: "Hello! I'm your insurance claim assistant. I can help you with questions about your claim, explain insurance terms, or provide guidance on the claim process. How can I assist you today?",
+        timestamp: new Date()
+      }]);
     }
-  ]);
+  }, []);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chat-history', JSON.stringify(messages));
+    }
+  }, [messages]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -66,7 +101,7 @@ const sendMessage = async () => {
   setIsTyping(true);
 
   try {
-    const aiReply = await getCohereReply(inputMessage, apiKey);
+    const aiReply = await getCohereReply(inputMessage, apiKey, messages);
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
